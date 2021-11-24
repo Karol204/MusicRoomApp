@@ -1,10 +1,10 @@
 from django.http import request
 from django.shortcuts import render
-from rest_framework import generics, status
+from rest_framework import generics, serializers, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Room
-from .serializers import RoomSerializer, CreateRoomSerializer
+from .serializers import RoomSerializer, CreateRoomSerializer, UpdateRoomSerializer
 from django.http import JsonResponse
 
 # Create your views here.
@@ -102,3 +102,34 @@ class LeaveRoom(APIView):
                 room = room_results[0]
                 room.delete()
         return Response({'Message': 'Success'}, status=status.HTTP_200_OK)
+
+
+class UpdateRoom(APIView):
+
+    serializer_class = UpdateRoomSerializer
+
+    def patch(self, request, format=None):
+        if not self.request.session.exists(self.request.session.session_key):
+            self.request.session.create()
+
+        serializers = self.serializer_class(data=request.data)
+        if serializers.is_valid():
+            guest_can_pause = serializers.data.get('guest_can_pause')
+            votes_to_skip = serializers.data.get('votes_to_skip')
+            code = serializers.data.get('code')
+
+            queryset = Room.objects.filter(code=code)
+            if not queryset.exists():
+                return Response({'msg': 'Room not found'}, status=status.HTTP_404_NOT_FOUND)
+
+            room = queryset[0]
+            user_id = self.request.session.session_key
+            if room.host != user_id:
+                return Response({'msg': 'You are not the host'}, status=status.HTTP_403_FORBIDDEN)
+
+            room.guest_can_pause = guest_can_pause
+            room.votes_to_skip = votes_to_skip
+            room.save(update_fields=['guest_can_pause', 'votes_to_skip'])
+            return Response(RoomSerializer(room).data, status=status.HTTP_200_OK)
+
+        return Response({'Bad Request': "invalid Data..."}, status=status.HTTP_400_BAD_REQUEST)
