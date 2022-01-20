@@ -130,7 +130,7 @@ export default class CreateRoomPage extends Component {
                         {this.state.successMsg}
                         </Alert>) : (<Alert
                          severity="error"
-                         onClose={() => {
+                           onClose={() => {
                         this.setState({errorMsg: ""})
                     }}>{this.state.errorMsg}</Alert>)}
                 </Collapse>
