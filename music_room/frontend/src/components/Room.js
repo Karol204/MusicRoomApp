@@ -159,7 +159,7 @@ export default class Room extends Component {
             <Button
               variant="contained"
               color="secondary"
-              onClick={this.leaveButtonPressed}
+              onClick={this.leaveBtnPressed}
             >
               Leave Room
             </Button>
